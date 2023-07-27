@@ -1,12 +1,15 @@
-# 🎉 Tiny Decoder Transformer
+# Tiny Decoder Transformer
 
-## 📚 Summary
 
 Welcome to the Tiny Decoder Transformer repository! This is my personal sandbox for experimenting with various improvements in the transformer architecture. The goal is to learn and improve my understanding by implementing everything from scratch. The `Tiny Stories dataset` serves as the benchmark for these experiments.
+
+&nbsp;
 
 ## 📚 Dataset
 
 The `Tiny Stories dataset` is a unique collection of short stories synthesized by GPT-3.5 and GPT-4. It uses vocabulary that's typically understood by 3 to 4-year-olds. This feature makes it ideal for my experiments, as it supports training and evaluating smaller, yet efficient Language Models (LMs). More information about this dataset can be found in the [published paper](https://arxiv.org/abs/2305.07759).
+
+&nbsp;
 
 ## 🎯 Gameplan
 
