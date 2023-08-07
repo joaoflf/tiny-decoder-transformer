@@ -4,3 +4,4 @@ fire
 black
 datasets
 transformers
+wandb
