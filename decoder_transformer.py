@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Generator
 
 import torch
 import torch.nn as nn
@@ -57,7 +58,9 @@ class DecoderTransformer(nn.Module):
 
         return logits, loss
 
-    def generate(self, context: torch.Tensor, num_tokens: int) -> torch.Tensor:
+    def generate(
+        self, context: torch.Tensor, num_tokens: int
+    ) -> Generator[torch.Tensor, None, None]:
         # generate tokens
         with torch.no_grad():
             for _ in range(num_tokens):
@@ -67,7 +70,7 @@ class DecoderTransformer(nn.Module):
                 probs = F.softmax(logits, dim=-1)
                 next_token = torch.multinomial(probs, 1)
                 context = torch.cat((context, next_token), dim=1)
-            return context
+                yield next_token
 
 
 class MultiHeadAttention(nn.Module):

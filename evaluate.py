@@ -12,7 +12,7 @@ def evaluate(
     checkpoint_path: str,
     device: str | torch.device = "cuda" if torch.cuda.is_available() else "mps",
     num_tokens: int = 100,
-    prompt: str = "Sol had a dog named Jobim",
+    prompt: str = """Tom and Jane are friends. One day, Jane goes to Tom’s house. Tom has a big pot of soup. He wants to share it with Jane. “Jane, do you want some soup?” Tom asks. “Yes, please. It looks yummy,” Jane says. Tom pours some soup into two bowls. He gives one bowl to Jane. Jane takes a spoonful of soup, but then she makes a face. The soup is""",
     batch_size: int = 32,
     check_train_loss: bool = False,
     check_val_loss: bool = False,
@@ -37,21 +37,21 @@ def evaluate(
     model = torch.compile(model)
     model.load_state_dict(torch.load(checkpoint_path), strict=False)
     model.eval()
-
-    train_data = TinyStoriesDataset(
-        split="train", context_size=context_size, device=device
-    )
-    val_data = TinyStoriesDataset(
-        split="validation", context_size=context_size, device=device
-    )
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
-
     splits = {}
+
     if check_train_loss:
+        train_data = TinyStoriesDataset(
+            split="train", context_size=context_size, device=device
+        )
+        train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
         splits.update({"training": train_loader})
     if check_val_loss:
+        val_data = TinyStoriesDataset(
+            split="validation", context_size=context_size, device=device
+        )
+        val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
         splits.update({"validation": val_loader})
+
     for split, loader in splits.items():
         print(f"Evaluating on {split} set")
         total_loss = 0
@@ -69,9 +69,11 @@ def evaluate(
         torch.tensor(tokenizer.encode(prompt), dtype=torch.long).unsqueeze(0).to(device)
     )
 
+    print(prompt, end="")
     # Generate text
     generated_text = model.generate(encoded_context, num_tokens)
-    print(tokenizer.decode(generated_text.tolist()[0]))
+    for token in generated_text:
+        print(tokenizer.decode(token.tolist()[0]), end="")
 
 
 if __name__ == "__main__":

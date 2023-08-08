@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+
 import time
 
 import fire
@@ -28,10 +29,10 @@ def train(
     epochs = epochs
     eval_every = eval_every or epochs // 10
 
-    hidden_size = 256
+    hidden_size = 512
     context_size = 256
-    num_heads = 2
-    num_blocks = 2
+    num_heads = 16
+    num_blocks = 8
 
     train_data = TinyStoriesDataset(
         split="train", context_size=context_size, device=device
@@ -57,7 +58,6 @@ def train(
     ).to(device)
     total_params = sum(p.numel() for p in model.parameters()) / 10e5
     print(f"Loaded model with {total_params:.2f}M parameters")
-
     model = torch.compile(model) if torch.cuda.is_available() else model
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     scaler = GradScaler(enabled=torch.cuda.is_available())
@@ -98,7 +98,7 @@ def train(
                         model.state_dict(),
                         os.path.join(
                             checkpoint_dir,
-                            f"{time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(start_time))}_model_state.pt",
+                            f"{time.strftime('%Y%m%d_%H%M', time.localtime(start_time))}_model_state.pt",
                         ),
                     )
                     # Evaluate the model
