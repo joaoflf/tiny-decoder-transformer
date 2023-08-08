@@ -92,7 +92,7 @@ def train(
                         loss.backward()
                         optimizer.step()
 
-                if i % eval_every == 0:
+                if i % eval_every == 0 and i > 0:
                     # Save the model state
                     torch.save(
                         model.state_dict(),
