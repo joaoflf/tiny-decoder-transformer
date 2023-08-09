@@ -194,12 +194,3 @@ class Block(nn.Module):
         x = x + self.multi_head_attention(self.layer_norm1(x), attention_mask)
         x = x + self.feed_forward(self.layer_norm2(x))
         return x if attention_mask is None else (x, attention_mask)
-
-
-if __name__ == "__main__":
-    # test the model
-    model = DecoderTransformer(2, 2, 32, 8, 100)
-    x = torch.randint(0, 100, (32, 8))
-    attention_mask = torch.ones(32, 8)
-    attention_mask[:, 4:] = 0
-    logits, loss = model({"input_ids": x, "attention_mask": attention_mask}, x)

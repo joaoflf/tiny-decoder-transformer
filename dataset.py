@@ -16,7 +16,7 @@ class TinyStoriesDataset(Dataset):
         self.device = device
         self.dataset = load_dataset("roneneldan/TinyStories", split=split)
         self.tokenizer = Tokenizer.from_pretrained("gpt2", local_files_only=True)
-        self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        self.tokenizer.pad_token = self.tokenizer.eos_token
         self.sequence_length = context_size
         self.dataset = self.dataset.with_format(type="torch")
         self.dataset = self.dataset.map(
