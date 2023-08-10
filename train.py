@@ -95,6 +95,9 @@ def train(
                 with autocast(enabled=torch.cuda.is_available()):
                     logits, loss = model(x, y)
 
+                    if multi_gpus:
+                        loss = loss.mean()
+
                     if torch.cuda.is_available():
                         scaler.scale(loss).backward()
                         scaler.step(optimizer)
@@ -123,6 +126,8 @@ def train(
                                     x, y = next(loader)
                                     model.eval()
                                     _, loss = model(x, y)
+                                    if multi_gpus:
+                                        loss = loss.mean()
                                     losses[j] = loss.item()
                             eval_losses.append(losses.mean().item())
                     wandb.log(
