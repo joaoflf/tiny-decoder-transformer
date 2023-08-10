@@ -1,0 +1,5 @@
+77M:
+  hidden_size: 512
+  context_size: 256
+  num_heads: 16
+  num_blocks: 8

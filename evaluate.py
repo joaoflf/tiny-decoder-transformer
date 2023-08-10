@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from transformers import GPT2TokenizerFast as Tokenizer
 from decoder_transformer import DecoderTransformer
 from torch.cuda.amp.autocast_mode import autocast
+import yaml
 
 
 def evaluate(
@@ -16,15 +17,21 @@ def evaluate(
     batch_size: int = 32,
     check_train_loss: bool = False,
     check_val_loss: bool = False,
+    model_version: str = "77M",
 ):
     tokenizer = Tokenizer.from_pretrained("gpt2", local_files_only=True)
     tokenizer.pad_token = tokenizer.eos_token
     device = torch.device(device)
     vocab_size = tokenizer.vocab_size
-    hidden_size = 256
-    context_size = 256
-    num_heads = 2
-    num_blocks = 2
+
+    with open("model_config.yaml", "r") as f:
+        model_config = yaml.safe_load(f)
+
+    model_config = model_config[model_version]
+    hidden_size = model_config["hidden_size"]
+    context_size = model_config["context_size"]
+    num_heads = model_config["num_heads"]
+    num_blocks = model_config["num_blocks"]
 
     # Load the model from the checkpoint
     model = DecoderTransformer(
@@ -34,7 +41,7 @@ def evaluate(
         context_size=context_size,
         vocab_size=vocab_size,
     ).to(device)
-    model = torch.compile(model)
+    # model = torch.compile(model)
     model.load_state_dict(torch.load(checkpoint_path), strict=False)
     model.eval()
     splits = {}

@@ -5,3 +5,4 @@ black
 datasets
 transformers
 wandb
+PyYAML

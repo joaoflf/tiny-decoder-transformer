@@ -10,6 +10,7 @@ from torch.cuda.amp.grad_scaler import GradScaler
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 import wandb
+import yaml
 
 from dataset import TinyStoriesDataset
 from decoder_transformer import DecoderTransformer
@@ -22,6 +23,8 @@ def train(
     device: str | torch.device = "cuda" if torch.cuda.is_available() else "mps",
     checkpoint_dir: str = "checkpoints",
     eval_every: int = 100,
+    multi_gpus: bool = False,
+    model_version: str = "77M",
 ):
     device = torch.device(device)
     batch_size = batch_size
@@ -29,10 +32,14 @@ def train(
     epochs = epochs
     eval_every = eval_every or epochs // 10
 
-    hidden_size = 512
-    context_size = 256
-    num_heads = 16
-    num_blocks = 8
+    with open("model_config.yaml", "r") as f:
+        model_config = yaml.safe_load(f)
+
+    model_config = model_config[model_version]
+    hidden_size = model_config["hidden_size"]
+    context_size = model_config["context_size"]
+    num_heads = model_config["num_heads"]
+    num_blocks = model_config["num_blocks"]
 
     train_data = TinyStoriesDataset(
         split="train", context_size=context_size, device=device
@@ -58,7 +65,11 @@ def train(
     ).to(device)
     total_params = sum(p.numel() for p in model.parameters()) / 10e5
     print(f"Loaded model with {total_params:.2f}M parameters")
-    model = torch.compile(model) if torch.cuda.is_available() else model
+
+    if multi_gpus:
+        print("Using", torch.cuda.device_count(), "GPUs!")
+        model = torch.nn.DataParallel(model)
+    # model = torch.compile(model) if torch.cuda.is_available() else model
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     scaler = GradScaler(enabled=torch.cuda.is_available())
     os.makedirs(checkpoint_dir, exist_ok=True)
