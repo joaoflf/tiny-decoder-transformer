@@ -25,6 +25,7 @@ def train(
     eval_every: int = 100,
     multi_gpus: bool = False,
     model_version: str = "77M",
+    checkpoint: str = "",
 ):
     device = torch.device(device)
     batch_size = batch_size
@@ -66,6 +67,11 @@ def train(
     total_params = sum(p.numel() for p in model.parameters()) / 10e5
     print(f"Loaded model with {total_params:.2f}M parameters")
 
+    if checkpoint:
+        model.load_state_dict(
+            torch.load(f"{checkpoint_dir}/{checkpoint}"), strict=False
+        )
+        print(f"Loaded checkpoint {checkpoint}")
     if multi_gpus:
         print("Using", torch.cuda.device_count(), "GPUs!")
         model = torch.nn.DataParallel(model)
