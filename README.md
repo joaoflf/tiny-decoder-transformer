@@ -21,17 +21,15 @@ Here's the roadmap for the improvements and experiments:
 
 3. **Test Different Activation Functions**: Evaluate the impact of different activation functions, such as Swish and GELU, on the model's performance.
 
-4. **Implement Flash Attention**: Incorporate the Flash Attention mechanism to reduce the computational complexity of transformers. For more details about Flash Attention, refer to this [published paper](<insert_paper_link>).
+4. **Implement Fixed Sparse Attention**: Explore the concept of fixed sparse attention as described in [Generating Long Sequences with Sparse Transformers](https://arxiv.org/pdf/1904.10509.pdf)
 
-5. **Explore Layer Normalization Techniques**: Experiment with different layer normalization techniques like Post-LN and Pre-LN.
+5. **Try Alternative Attention Mechanisms**: Implement and test attention mechanisms, such as Linformer and LongFormer, aimed at reducing computational complexity.
 
-6. **Try Alternative Attention Mechanisms**: Implement and test attention mechanisms, such as Linformer and LongFormer, aimed at reducing computational complexity.
+6. **Apply Pruning Techniques**: Investigate various pruning techniques to create a leaner model without compromising performance.
 
-7. **Apply Pruning Techniques**: Investigate various pruning techniques to create a leaner model without compromising performance.
+7. **Experiment with Model Distillation**: Use distillation techniques to develop smaller and more efficient models.
 
-8. **Experiment with Model Distillation**: Use distillation techniques to develop smaller and more efficient models.
-
-9. **Implement Dynamic Depth**: Introduce dynamic depth to customize the network depth for each input to potentially enhance efficiency.
+8. **Implement Dynamic Depth**: Introduce dynamic depth to customize the network depth for each input to potentially enhance efficiency.
 
 ## 📜 License
 
