@@ -18,6 +18,7 @@ def evaluate(
     check_train_loss: bool = False,
     check_val_loss: bool = False,
     model_version: str = "77M",
+    multi_gpus: bool = False,
 ):
     tokenizer = Tokenizer.from_pretrained("gpt2", local_files_only=True)
     tokenizer.pad_token = tokenizer.eos_token
@@ -41,6 +42,9 @@ def evaluate(
         context_size=context_size,
         vocab_size=vocab_size,
     ).to(device)
+    if multi_gpus:
+        print("Using", torch.cuda.device_count(), "GPUs!")
+        model = torch.nn.DataParallel(model)
     # model = torch.compile(model)
     model.load_state_dict(torch.load(checkpoint_path), strict=False)
     model.eval()
@@ -67,6 +71,8 @@ def evaluate(
                 x, y = x, y
                 with torch.no_grad():
                     _, loss = model(x, y)
+                    if multi_gpus:
+                        loss = loss.mean()
                 total_loss += loss.item()
         total_loss /= len(loader)
         print(f"\n{split} loss: {total_loss:.2f}")
@@ -78,6 +84,8 @@ def evaluate(
 
     print(prompt, end="")
     # Generate text
+    if multi_gpus:
+        model = model.module
     generated_text = model.generate(encoded_context, num_tokens)
     for token in generated_text:
         print(tokenizer.decode(token.tolist()[0]), end="")

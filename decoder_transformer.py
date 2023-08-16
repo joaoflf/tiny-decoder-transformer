@@ -63,13 +63,30 @@ class DecoderTransformer(nn.Module):
     ) -> Generator[torch.Tensor, None, None]:
         # generate tokens
         with torch.no_grad():
+            attention_mask = torch.ones_like(context)
             for _ in range(num_tokens):
                 cond_context = context[:, -self.context_size :]
-                logits, _ = self.forward(cond_context)
+                attention_mask = attention_mask[:, -self.context_size :]
+                logits, _ = self.forward(
+                    {"input_ids": cond_context, "attention_mask": attention_mask}
+                )
                 logits = logits[:, -1, :]
                 probs = F.softmax(logits, dim=-1)
                 next_token = torch.multinomial(probs, 1)
+                # atteteion mask not working in preventing succesive eos tokens, thus we are skipping for now
+                if next_token == 50256:
+                    continue
                 context = torch.cat((context, next_token), dim=1)
+                attention_mask_value = [0] if next_token == 50256 else [1]
+                attention_mask = torch.cat(
+                    (
+                        attention_mask,
+                        torch.tensor(attention_mask_value)
+                        .to(context.device)
+                        .unsqueeze(0),
+                    ),
+                    dim=1,
+                )
                 yield next_token
 
 
@@ -83,15 +100,15 @@ class MultiHeadAttention(nn.Module):
         self,
         num_heads: int,
         head_size: int,
-        embed_size: int,
+        hidden_size: int,
         context_size: int,
         dropout: float = 0.2,
     ):
         super().__init__()
         self.heads = nn.ModuleList(
-            [Head(head_size, embed_size, context_size) for _ in range(num_heads)]
+            [Head(head_size, hidden_size, context_size) for _ in range(num_heads)]
         )
-        self.proj = nn.Linear(embed_size, embed_size)
+        self.proj = nn.Linear(hidden_size, hidden_size)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
@@ -105,13 +122,13 @@ class Head(nn.Module):
     """
 
     def __init__(
-        self, head_size: int, embed_size: int, context_size: int, dropout: float = 0.2
+        self, head_size: int, hidden_size: int, context_size: int, dropout: float = 0.2
     ):
         super().__init__()
         self.head_size = head_size
-        self.queries = nn.Linear(embed_size, head_size, bias=False)
-        self.keys = nn.Linear(embed_size, head_size, bias=False)
-        self.values = nn.Linear(embed_size, head_size, bias=False)
+        self.queries = nn.Linear(hidden_size, head_size, bias=False)
+        self.keys = nn.Linear(hidden_size, head_size, bias=False)
+        self.values = nn.Linear(hidden_size, head_size, bias=False)
         self.register_buffer(
             "tril_mask", torch.tril(torch.ones(context_size, context_size))
         )
@@ -173,16 +190,16 @@ class Block(nn.Module):
         self,
         num_heads: int,
         head_size: int,
-        embed_size: int,
+        hidden_size: int,
         context_size: int,
     ):
         super().__init__()
         self.multi_head_attention = MultiHeadAttention(
-            num_heads, head_size, embed_size, context_size
+            num_heads, head_size, hidden_size, context_size
         )
-        self.feed_forward = FeedForward(embed_size)
-        self.layer_norm1 = nn.LayerNorm(embed_size)
-        self.layer_norm2 = nn.LayerNorm(embed_size)
+        self.feed_forward = FeedForward(hidden_size)
+        self.layer_norm1 = nn.LayerNorm(hidden_size)
+        self.layer_norm2 = nn.LayerNorm(hidden_size)
 
     def forward(
         self, x: torch.Tensor | tuple[torch.Tensor, torch.Tensor]
